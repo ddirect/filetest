@@ -88,3 +88,15 @@ func NewDirsFactory(dirFactory DirFactory, countFactory func() int) DirsFactory 
 		return dirs
 	}
 }
+
+func NullFilesFactory() FilesFactory {
+	return func(*Dir) []*File {
+		return nil
+	}
+}
+
+func NullDirsFactory() DirsFactory {
+	return func(*Dir, int) []*Dir {
+		return nil
+	}
+}

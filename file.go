@@ -1,6 +1,7 @@
 package filetest
 
 import (
+	"fmt"
 	"hash"
 	"io"
 	"os"
@@ -14,6 +15,10 @@ import (
 type File struct {
 	Entry
 	Hash []byte
+}
+
+func (f *File) String() string {
+	return fmt.Sprintf("%02x %s", f.Hash, f.Path())
 }
 
 const newFilePerm = 0664
