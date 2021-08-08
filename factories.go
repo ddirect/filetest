@@ -60,16 +60,10 @@ func NewFileFactory(entryFactory EntryFactory) FileFactory {
 
 func NewDirFactory(entryFactory EntryFactory, filesFactory FilesFactory, dirsFactory DirsFactory) DirFactory {
 	return func(parent *Dir, depth int) *Dir {
-		files := make(map[string]*File)
-		dirs := make(map[string]*Dir)
-		newdir := &Dir{entryFactory(parent), files, dirs}
-		for _, file := range filesFactory(newdir) {
-			files[file.Name] = file
-		}
-		for _, dir := range dirsFactory(newdir, depth+1) {
-			dirs[dir.Name] = dir
-		}
-		return newdir
+		dir := &Dir{Entry: entryFactory(parent)}
+		dir.Files = filesFactory(dir)
+		dir.Dirs = dirsFactory(dir, depth+1)
+		return dir
 	}
 }
 

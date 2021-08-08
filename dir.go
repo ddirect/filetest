@@ -3,14 +3,15 @@ package filetest
 import (
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/ddirect/check"
 )
 
 type Dir struct {
 	Entry
-	Files map[string]*File
-	Dirs  map[string]*Dir
+	Files []*File
+	Dirs  []*Dir
 }
 
 func (d *Dir) EachDir(cb func(*Dir)) {
@@ -39,12 +40,17 @@ func (d *Dir) EachFileRecursive(cb func(*File)) {
 	})
 }
 
-// func (d *Dir) EachRecursive(fcb func(*File), dcb func(*Dir)) {
-// 	d.EachFile(fcb)
-// 	d.EachDir(func(nd *Dir) {
-// 		nd.EachRecursive(fcb, dcb)
-// 	})
-// }
+func (d *Dir) Sort() {
+	sort.Slice(d.Files, func(i, j int) bool {
+		return d.Files[i].Name < d.Files[j].Name
+	})
+	sort.Slice(d.Dirs, func(i, j int) bool {
+		return d.Dirs[i].Name < d.Dirs[j].Name
+	})
+	d.EachDirRecursive(func(nd *Dir) {
+		nd.Sort()
+	})
+}
 
 func NewDirMakerFactory(base string) func(*Dir) {
 	return func(d *Dir) {
@@ -90,17 +96,15 @@ func NewDirFromStorage(base string) *Dir {
 	core = func(entry Entry) *Dir {
 		entries, err := os.ReadDir(filepath.Join(base, entry.Path()))
 		check.E(err)
-		files := make(map[string]*File)
-		dirs := make(map[string]*Dir)
-		dir := &Dir{entry, files, dirs}
+		dir := &Dir{Entry: entry}
 		for _, e := range entries {
 			name := e.Name()
 			ne := Entry{dir, name}
 			mode := e.Type()
 			if mode.IsRegular() {
-				files[name] = fileFactory(ne)
+				dir.Files = append(dir.Files, fileFactory(ne))
 			} else if mode.IsDir() {
-				dirs[name] = core(ne)
+				dir.Dirs = append(dir.Dirs, core(ne))
 			}
 		}
 		return dir

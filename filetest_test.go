@@ -22,9 +22,11 @@ func TestCreateAndReloadTree(t *testing.T) {
 	rnd := xrand.New()
 	root := t.TempDir()
 	tree := createRandomTree(rnd)
+	tree.Sort()
 	tree.EachDirRecursive(NewDirMakerFactory(root))
 	tree.EachFileRecursive(NewRandomFileFactory(rnd, root, rnd.UniformFactory(100, 200)))
 	st := NewDirFromStorage(root)
+	st.Sort()
 	if !reflect.DeepEqual(tree, st) {
 		t.Fail()
 	}
