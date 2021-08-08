@@ -9,5 +9,6 @@ replace github.com/ddirect/check => ../check
 require (
 	github.com/ddirect/check v0.0.0-00010101000000-000000000000
 	github.com/ddirect/xrand v0.0.0-00010101000000-000000000000
+	github.com/google/go-cmp v0.5.5
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 )

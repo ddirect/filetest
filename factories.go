@@ -62,7 +62,7 @@ func NewDirFactory(entryFactory EntryFactory, filesFactory FilesFactory, dirsFac
 	return func(parent *Dir, depth int) *Dir {
 		dir := &Dir{Entry: entryFactory(parent)}
 		dir.Files = filesFactory(dir)
-		dir.Dirs = dirsFactory(dir, depth+1)
+		dir.Dirs = dirsFactory(dir, depth)
 		return dir
 	}
 }
@@ -78,15 +78,22 @@ func NewFilesFactory(fileFactory FileFactory, countFactory func() int) FilesFact
 	}
 }
 
-func NewDirsFactory(dirFactory DirFactory, countFactory func() int) DirsFactory {
+func NewDirsFactory(maxDepth int, countFactory func() int) (DirsFactory, func(DirFactory)) {
+	var dirFactory DirFactory
 	return func(parent *Dir, depth int) []*Dir {
-		count := countFactory()
-		dirs := make([]*Dir, count)
-		for i := range dirs {
-			dirs[i] = dirFactory(parent, depth)
+			if dirFactory == nil || depth >= maxDepth {
+				return nil
+			}
+			count := countFactory()
+			dirs := make([]*Dir, count)
+			for i := range dirs {
+				dirs[i] = dirFactory(parent, depth+1)
+			}
+			return dirs
+		},
+		func(dirFactory_ DirFactory) {
+			dirFactory = dirFactory_
 		}
-		return dirs
-	}
 }
 
 func NullFilesFactory() FilesFactory {

@@ -13,7 +13,3 @@ func (e *Entry) Path() string {
 	}
 	return filepath.Join(e.Parent.Path(), e.Name)
 }
-
-func (e Entry) Equal(other Entry) bool {
-	return e.Path() == other.Path()
-}

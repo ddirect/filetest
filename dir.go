@@ -6,12 +6,37 @@ import (
 	"sort"
 
 	"github.com/ddirect/check"
+	"github.com/google/go-cmp/cmp"
 )
 
 type Dir struct {
 	Entry
 	Files []*File
 	Dirs  []*Dir
+}
+
+func (d *Dir) Compare(o *Dir) bool {
+	return cmp.Equal(d, o,
+		cmp.Transformer("files_trans", func(files []*File) map[string]*File {
+			m := make(map[string]*File, len(files))
+			for _, f := range files {
+				m[f.Name] = f
+			}
+			if len(m) != len(files) {
+				panic("cmp files transformer: repeated names detected")
+			}
+			return m
+		}),
+		cmp.Transformer("dirs_trans", func(dirs []*Dir) map[string]*Dir {
+			m := make(map[string]*Dir, len(dirs))
+			for _, d := range dirs {
+				m[d.Name] = d
+			}
+			if len(m) != len(dirs) {
+				panic("cmp dirs transformer: repeated names detected")
+			}
+			return m
+		}))
 }
 
 func (d *Dir) EachDir(cb func(*Dir)) {
