@@ -8,11 +8,11 @@ import (
 
 var LowerCaseChars, ValidChars string
 
-type EntryFactory func(parentPath string) Entry
-type FileFactory func(parentPath string) *File
-type FilesFactory func(parentPath string) []*File
-type DirFactory func(parentPath string, depth int) *Dir
-type DirsFactory func(parentPath string, depth int) []*Dir
+type EntryFactory func(parent *Dir) Entry
+type FileFactory func(parent *Dir) *File
+type FilesFactory func(parent *Dir) []*File
+type DirFactory func(parent *Dir, depth int) *Dir
+type DirsFactory func(parent *Dir, depth int) []*Dir
 
 func init() {
 	var b strings.Builder
@@ -41,8 +41,8 @@ func NewRandomNameFactory(rnd *xrand.Xrand, sizeFactory func() int, charSet stri
 }
 
 func NewEntryFactory(nameFactory func() string) EntryFactory {
-	return func(parentPath string) Entry {
-		return Entry{parentPath, nameFactory()}
+	return func(parent *Dir) Entry {
+		return Entry{parent, nameFactory()}
 	}
 }
 
@@ -53,44 +53,43 @@ func NullEntryFactory() EntryFactory {
 }
 
 func NewFileFactory(entryFactory EntryFactory) FileFactory {
-	return func(parentPath string) *File {
-		return &File{entryFactory(parentPath), nil}
+	return func(parent *Dir) *File {
+		return &File{entryFactory(parent), nil}
 	}
 }
 
 func NewDirFactory(entryFactory EntryFactory, filesFactory FilesFactory, dirsFactory DirsFactory) DirFactory {
-	return func(parentPath string, depth int) *Dir {
-		entry := entryFactory(parentPath)
-		entryPath := entry.Path()
+	return func(parent *Dir, depth int) *Dir {
 		files := make(map[string]*File)
 		dirs := make(map[string]*Dir)
-		for _, file := range filesFactory(entryPath) {
+		newdir := &Dir{entryFactory(parent), files, dirs}
+		for _, file := range filesFactory(newdir) {
 			files[file.Name] = file
 		}
-		for _, dir := range dirsFactory(entryPath, depth+1) {
+		for _, dir := range dirsFactory(newdir, depth+1) {
 			dirs[dir.Name] = dir
 		}
-		return &Dir{entry, files, dirs}
+		return newdir
 	}
 }
 
 func NewFilesFactory(fileFactory FileFactory, countFactory func() int) FilesFactory {
-	return func(parentPath string) []*File {
+	return func(parent *Dir) []*File {
 		count := countFactory()
 		files := make([]*File, count)
 		for i := range files {
-			files[i] = fileFactory(parentPath)
+			files[i] = fileFactory(parent)
 		}
 		return files
 	}
 }
 
 func NewDirsFactory(dirFactory DirFactory, countFactory func() int) DirsFactory {
-	return func(parentPath string, depth int) []*Dir {
+	return func(parent *Dir, depth int) []*Dir {
 		count := countFactory()
 		dirs := make([]*Dir, count)
 		for i := range dirs {
-			dirs[i] = dirFactory(parentPath, depth)
+			dirs[i] = dirFactory(parent, depth)
 		}
 		return dirs
 	}

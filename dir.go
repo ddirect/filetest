@@ -88,14 +88,14 @@ func NewDirFromStorage(base string) *Dir {
 	fileFactory := NewFileFromStorageFactory(base)
 	var core func(entry Entry) *Dir
 	core = func(entry Entry) *Dir {
-		parentPath := entry.Path()
-		entries, err := os.ReadDir(filepath.Join(base, parentPath))
+		entries, err := os.ReadDir(filepath.Join(base, entry.Path()))
 		check.E(err)
 		files := make(map[string]*File)
 		dirs := make(map[string]*Dir)
+		dir := &Dir{entry, files, dirs}
 		for _, e := range entries {
 			name := e.Name()
-			ne := Entry{parentPath, name}
+			ne := Entry{dir, name}
 			mode := e.Type()
 			if mode.IsRegular() {
 				files[name] = fileFactory(ne)
@@ -103,7 +103,7 @@ func NewDirFromStorage(base string) *Dir {
 				dirs[name] = core(ne)
 			}
 		}
-		return &Dir{entry, files, dirs}
+		return dir
 	}
 	return core(Entry{})
 }

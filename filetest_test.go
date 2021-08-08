@@ -15,7 +15,7 @@ func createRandomTree(rnd *xrand.Xrand) *Dir {
 	var dirsFactory DirsFactory
 	dirFactory := NewDirFactory(entryFactory, filesFactory, FutureDirsFactory(3, &dirsFactory))
 	dirsFactory = NewDirsFactory(dirFactory, rnd.UniformFactory(2, 4))
-	return NewDirFactory(NullEntryFactory(), filesFactory, dirsFactory)("", 0)
+	return NewDirFactory(NullEntryFactory(), filesFactory, dirsFactory)(nil, 0)
 }
 
 func TestCreateAndReloadTree(t *testing.T) {

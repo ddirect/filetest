@@ -3,10 +3,13 @@ package filetest
 import "path/filepath"
 
 type Entry struct {
-	ParentPath string
-	Name       string
+	Parent *Dir
+	Name   string
 }
 
 func (e *Entry) Path() string {
-	return filepath.Join(e.ParentPath, e.Name)
+	if e.Parent == nil {
+		return e.Name
+	}
+	return filepath.Join(e.Parent.Path(), e.Name)
 }
