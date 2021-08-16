@@ -45,11 +45,12 @@ func (d *Dir) EachDir(cb func(*Dir)) {
 	}
 }
 
-func (d *Dir) EachDirRecursive(cb func(*Dir)) {
+func (d *Dir) EachDirRecursive(cb func(*Dir)) (count int) {
 	d.EachDir(func(nd *Dir) {
 		cb(nd)
-		nd.EachDirRecursive(cb)
+		count += nd.EachDirRecursive(cb) + 1
 	})
+	return
 }
 
 func (d *Dir) EachFile(cb func(*File)) {
@@ -135,4 +136,29 @@ func NewDirFromStorage(base string) *Dir {
 		return dir
 	}
 	return core(Entry{})
+}
+
+// Remove files by pointer
+func (d *Dir) RemoveFiles(files []*File) {
+	remove := make(map[*File]bool, len(files))
+	for _, file := range files {
+		remove[file] = true
+	}
+
+	core := func(d *Dir) {
+		files := d.Files
+		w := 0
+		for r, file := range files {
+			if !remove[file] {
+				if r != w {
+					files[w] = file
+				}
+				w++
+			}
+		}
+		d.Files = files[:w]
+	}
+
+	core(d)
+	d.EachDirRecursive(core)
 }

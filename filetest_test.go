@@ -22,3 +22,25 @@ func TestCreateAndReloadTree(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestCommitZonedFilesMixed(t *testing.T) {
+	rnd := xrand.New()
+	root := t.TempDir()
+
+	tree := NewRandomTree(rnd, TreeOptions{
+		ValidChars,
+		MinMax{32, 40},
+		MinMax{0, 5},
+		MinMax{3, 4},
+		3,
+	})
+
+	files := tree.AllFilesSlice()
+	dirCount := CommitDirs(tree, root)
+	ds, excluded := CommitZonedFilesMixed(rnd, rnd, files, DefaultZones(), DefaultMixes(), root, true)
+	t.Logf("%d dirs - %s - %d excluded files (already excluded from total)", dirCount, ds, len(excluded))
+	tree.RemoveFiles(excluded)
+	if !tree.Compare(NewDirFromStorage(root)) {
+		t.Fail()
+	}
+}
