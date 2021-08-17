@@ -26,11 +26,18 @@ func DefaultTreeOptions() TreeOptions {
 }
 
 func NewRandomTree(rnd *xrand.Xrand, o TreeOptions) *Dir {
-	entryFactory := NewEntryFactory(NewRandomNameFactory(rnd, rnd.UniformFactory(o.CharCount.Min, o.CharCount.Max), o.CharSet))
+	res, _ := NewRandomTree2(rnd, o)
+	return res
+}
+
+// returns also the name factory
+func NewRandomTree2(rnd *xrand.Xrand, o TreeOptions) (*Dir, func() string) {
+	nameFactory := NewRandomNameFactory(rnd, rnd.UniformFactory(o.CharCount.Min, o.CharCount.Max), o.CharSet)
+	entryFactory := NewEntryFactory(nameFactory)
 	fileFactory := NewFileFactory(entryFactory)
 	filesFactory := NewFilesFactory(fileFactory, rnd.UniformFactory(o.FileCount.Min, o.FileCount.Max))
 
 	dirsFactory, dfSet := NewDirsFactory(o.Depth, rnd.UniformFactory(o.DirCount.Min, o.DirCount.Max))
 	dfSet(NewDirFactory(entryFactory, filesFactory, dirsFactory))
-	return NewDirFactory(NullEntryFactory(), filesFactory, dirsFactory)(nil, 0)
+	return NewDirFactory(NullEntryFactory(), filesFactory, dirsFactory)(nil, 0), nameFactory
 }
