@@ -1,6 +1,8 @@
 package filetest
 
 import (
+	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -66,6 +68,14 @@ func (d *Dir) EachFileRecursive(cb func(*File)) {
 	})
 }
 
+func (d *Dir) EachRecursive(fcb func(*File), dcb func(*Dir)) {
+	d.EachFile(fcb)
+	d.EachDir(func(nd *Dir) {
+		dcb(nd)
+		nd.EachRecursive(fcb, dcb)
+	})
+}
+
 func (d *Dir) Sort() {
 	sort.Slice(d.Files, func(i, j int) bool {
 		return d.Files[i].Name < d.Files[j].Name
@@ -117,6 +127,10 @@ func (d *Dir) AllDirsSlice() []*Dir {
 }
 
 func NewDirFromStorage(base string) *Dir {
+	return NewDirFromStorageFiltered(base, nil)
+}
+
+func NewDirFromStorageFiltered(base string, fileFilter func(e Entry) bool) *Dir {
 	fileFactory := NewFileFromStorageFactory(base)
 	var core func(entry Entry) *Dir
 	core = func(entry Entry) *Dir {
@@ -128,7 +142,9 @@ func NewDirFromStorage(base string) *Dir {
 			ne := Entry{dir, name}
 			mode := e.Type()
 			if mode.IsRegular() {
-				dir.Files = append(dir.Files, fileFactory(ne))
+				if fileFilter == nil || fileFilter(ne) {
+					dir.Files = append(dir.Files, fileFactory(ne))
+				}
 			} else if mode.IsDir() {
 				dir.Dirs = append(dir.Dirs, core(ne))
 			}
@@ -161,4 +177,20 @@ func (d *Dir) RemoveFiles(files []*File) {
 
 	core(d)
 	d.EachDirRecursive(core)
+}
+
+func (d *Dir) Dump(outFile string) {
+	file, err := os.Create(outFile)
+	check.E(err)
+	defer check.DeferredE(file.Close)
+	w := bufio.NewWriter(file)
+	d.EachRecursive(
+		func(f *File) {
+			fmt.Fprintln(w, f.Path())
+		},
+		func(d *Dir) {
+			fmt.Fprintf(w, "%s:\n", d.Path())
+		},
+	)
+	w.Flush()
 }
