@@ -13,3 +13,7 @@ func (e *Entry) Path() string {
 	}
 	return filepath.Join(e.Parent.Path(), e.Name)
 }
+
+func (e *Entry) PathFrom(base string) string {
+	return filepath.Join(base, e.Path())
+}

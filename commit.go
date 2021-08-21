@@ -16,12 +16,13 @@ func DefaultZones() Zones {
 }
 
 type Mixes struct {
+	MaxSize int
 	// in % - what remains are unique files
 	Created, Cloned, Linked int
 }
 
 func DefaultMixes() Mixes {
-	return Mixes{25, 50, 75}
+	return Mixes{5000, 25, 50, 75}
 }
 
 type DirStats struct {
@@ -89,7 +90,7 @@ func CommitFilesMixed(rnd *xrand.Xrand, files []*File, m Mixes, root string) Dir
 		createLimit = 1
 	}
 
-	create := NewRandomFileFactory(rnd, root, rnd.UniformFactory(0, 5000))
+	create := NewRandomFileFactory(rnd, root, rnd.UniformFactory(0, m.MaxSize))
 	clone := NewCloneFileOperation(root, root)
 	link := NewLinkFileOperation(root, root)
 

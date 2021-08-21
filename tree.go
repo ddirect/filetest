@@ -1,6 +1,10 @@
 package filetest
 
-import "github.com/ddirect/xrand"
+import (
+	"testing"
+
+	"github.com/ddirect/xrand"
+)
 
 type MinMax struct {
 	Min int
@@ -25,6 +29,16 @@ func DefaultTreeOptions() TreeOptions {
 	}
 }
 
+func FlatTreeOptions(minFiles, maxFiles int) TreeOptions {
+	return TreeOptions{
+		LowerCaseChars,
+		MinMax{16, 32},
+		MinMax{minFiles, maxFiles},
+		MinMax{},
+		0,
+	}
+}
+
 func NewRandomTree(rnd *xrand.Xrand, o TreeOptions) *Dir {
 	res, _ := NewRandomTree2(rnd, o)
 	return res
@@ -40,4 +54,15 @@ func NewRandomTree2(rnd *xrand.Xrand, o TreeOptions) (*Dir, func() string) {
 	dirsFactory, dfSet := NewDirsFactory(o.Depth, rnd.UniformFactory(o.DirCount.Min, o.DirCount.Max))
 	dfSet(NewDirFactory(entryFactory, filesFactory, dirsFactory))
 	return NewDirFactory(NullEntryFactory(), filesFactory, dirsFactory)(nil, 0), nameFactory
+}
+
+func CommitNewRandomTree(t *testing.T, altRoot string, o TreeOptions, m Mixes) (string, *Dir, DirStats) {
+	rnd := xrand.New()
+	dest := TempDir(t, altRoot)
+	tree := NewRandomTree(rnd, o)
+	return dest, tree, CommitMixed(rnd, tree, m, dest)
+}
+
+func CommitNewDefaultRandomTree(t *testing.T) (string, *Dir, DirStats) {
+	return CommitNewRandomTree(t, "gotest_tree", DefaultTreeOptions(), DefaultMixes())
 }
