@@ -38,7 +38,7 @@ func TestCommitZonedFilesMixed(t *testing.T) {
 	files := tree.AllFilesSlice()
 	dirCount := CommitDirs(tree, root)
 	ds, excluded := CommitZonedFilesMixed(rnd, rnd, files, DefaultZones(), DefaultMixes(), root, true)
-	t.Logf("%d dirs - %s - %d excluded files (already excluded from total)", dirCount, ds, len(excluded))
+	t.Logf("%d dirs - %d excluded files (already excluded from total)\n%s", dirCount, len(excluded), ds)
 	tree.RemoveFiles(excluded)
 	if !tree.Compare(NewDirFromStorage(root)) {
 		t.Fail()

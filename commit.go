@@ -1,8 +1,6 @@
 package filetest
 
 import (
-	"fmt"
-
 	"github.com/ddirect/xrand"
 )
 
@@ -23,22 +21,6 @@ type Mixes struct {
 
 func DefaultMixes() Mixes {
 	return Mixes{5000, 25, 50, 75}
-}
-
-type DirStats struct {
-	TotalFiles   int
-	UniqueFiles  int
-	UniqueHashes int
-}
-
-func (ds DirStats) String() string {
-	return fmt.Sprintf("%d total files - %d unique files - %d unique hashes", ds.TotalFiles, ds.UniqueFiles, ds.UniqueHashes)
-}
-
-func (ds *DirStats) Merge(o DirStats) {
-	ds.TotalFiles += o.TotalFiles
-	ds.UniqueFiles += o.UniqueFiles
-	ds.UniqueHashes += o.UniqueHashes
 }
 
 func ShuffleFiles(rnd *xrand.Xrand, f []*File) {
@@ -96,18 +78,23 @@ func CommitFilesMixed(rnd *xrand.Xrand, files []*File, m Mixes, root string) Dir
 
 	i := 0
 
+	var ds DirStats
 	for ; i < createLimit; i++ {
 		create(files[i])
+		ds.UniqueHashes++
 	}
 	for ; i < cloneLimit; i++ {
 		clone(files[rnd.Intn(createLimit)], files[i])
+		ds.ClonedFiles++
 	}
 	for ; i < linkLimit; i++ {
 		link(files[rnd.Intn(cloneLimit)], files[i])
+		ds.LinkedFiles++
 	}
 	for ; i < uniqueLimit; i++ {
 		create(files[i])
+		ds.UniqueHashes++
 	}
-
-	return DirStats{len(files), len(files) - (linkLimit - cloneLimit), len(files) - (linkLimit - createLimit)}
+	ds.TotalFiles = ds.UniqueHashes + ds.ClonedFiles + ds.LinkedFiles
+	return ds
 }
